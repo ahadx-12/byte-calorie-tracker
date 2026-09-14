@@ -1,10 +1,10 @@
-# BYTE
+# Byte Milad
 
 A small, private calorie diary with an early-2000s desktop feel. Built for one person, with up to five independent local profiles.
 
 **No accounts. No analytics. No paid APIs. No runtime dependencies. MIT licensed.**
 
-![BYTE desktop diary](docs/desktop.png)
+![Byte Milad desktop diary](docs/desktop.png)
 
 [View the iPhone layout](docs/iphone.png)
 
@@ -64,7 +64,7 @@ For custom saved meals, values represent a whole reusable serving. Internally `s
 
 An entry distinguishes an estimate from custom/label values. The initial goals (2,200 kcal, 120 g protein and 2,000 ml water) are editable placeholders, not recommendations or a calculated diet plan. Goals are not used to prescribe weight loss. History averages include only dates with food records; incomplete logged days still count. Weight history shows the latest actual check-in; there is no prediction.
 
-For independently sourced nutrition details, see [USDA FoodData Central](https://fdc.nal.usda.gov/). BYTE does not call USDA or require an API key, and the built-in shelf is not represented as a verified USDA extract.
+For independently sourced nutrition details, see [USDA FoodData Central](https://fdc.nal.usda.gov/). Byte Milad does not call USDA or require an API key, and the built-in shelf is not represented as a verified USDA extract.
 
 ## Verify
 

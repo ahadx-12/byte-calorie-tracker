@@ -1,11 +1,11 @@
-# Deploy BYTE on AWS Amplify
+# Deploy Byte Milad on AWS Amplify
 
-BYTE is a static application. The AWS host only serves files; private diary data stays on each user's device. There is no backend to deploy.
+Byte Milad is a static application. The AWS host only serves files; private diary data stays on each user's device. There is no backend to deploy.
 
 ## Option 1: Connect GitHub
 
 1. In the AWS console, open **AWS Amplify** and create a new app.
-2. Choose GitHub as the source provider and authorize access to the BYTE repository.
+2. Choose GitHub as the source provider and authorize access to the Byte Milad repository.
 3. Select the repository and the `main` branch.
 4. Use the included `amplify.yml`: build command `node scripts/build.mjs`, output directory `dist`.
 5. Save and deploy. Wait for the deployment to finish, then open its HTTPS address.
@@ -42,7 +42,7 @@ The service worker needs HTTPS (localhost is allowed for development). Direct S3
 
 ## Updates and data
 
-Increment `CACHE` in `public/sw.js` whenever application assets change, commit, and deploy. Users should close all BYTE tabs and reopen once online to activate the new cache. Do not clear browser storage as an update procedure.
+Increment `CACHE` in `public/sw.js` whenever application assets change, commit, and deploy. Users should close all Byte Milad tabs and reopen once online to activate the new cache. Do not clear browser storage as an update procedure.
 
 Changing the hosting address creates a different browser storage area. Export from the old address and restore at the new one. No private user data is in this repository or the deployment ZIP.
 

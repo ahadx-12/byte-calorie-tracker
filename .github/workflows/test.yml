@@ -1,4 +1,4 @@
-name: Verify BYTE
+name: Verify Byte Milad
 on: [push, pull_request]
 jobs:
   test:

@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "BYTE — Daily food diary",
-  "short_name": "BYTE",
+  "name": "Byte Milad — Daily food diary",
+  "short_name": "Byte Milad",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

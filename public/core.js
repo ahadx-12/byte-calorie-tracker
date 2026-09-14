@@ -63,7 +63,7 @@ export function validateState(s) {
     s.profiles.length < 1 ||
     s.profiles.length > 5
   )
-    throw Error("This is not a supported BYTE backup.");
+    throw Error("This is not a supported Byte Milad backup.");
   const ids = new Set();
   for (const p of s.profiles) {
     if (!p || !str(p.id) || ids.has(p.id) || !str(p.name, 40))
