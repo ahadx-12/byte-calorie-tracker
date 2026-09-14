@@ -1,0 +1,21 @@
+{
+  "name": "byte-calorie-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A small, offline-first calorie diary with a classic desktop soul.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "BYTE — Daily food diary",
+  "short_name": "BYTE",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#27231e",
+  "theme_color": "#27231e",
+  "description": "Your private, offline calorie diary.",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

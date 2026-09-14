@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#27231e" />
+    <meta
+      name="description"
+      content="Your small, private calorie diary. Log meals, set goals, and keep going. Works offline, with no account."
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <title>BYTE — Daily food diary</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to diary</a>
+    <div class="desktop">
+      <header class="masthead">
+        <a class="brand" href="./" aria-label="BYTE home"
+          ><span class="brand-icon">b.</span
+          ><span>BYTE<small>THE DAILY FOOD DIARY</small></span></a
+        >
+        <div class="top-right">
+          <span id="connection" class="connection">LOCAL & PRIVATE</span
+          ><label class="sr-only" for="profile">Active profile</label
+          ><select id="profile"></select>
+        </div>
+      </header>
+      <div class="window">
+        <div class="titlebar">
+          <span
+            ><span class="tiny-icon">▦</span> byte.exe
+            <span class="title-description"
+              >— a little progress, every day</span
+            ></span
+          ><span aria-hidden="true" class="window-controls"
+            >─ &nbsp; □ &nbsp; ×</span
+          >
+        </div>
+        <nav aria-label="Main navigation">
+          <button class="nav-tab active" data-tab="today">
+            <span aria-hidden="true">▤</span> Today</button
+          ><button class="nav-tab" data-tab="history">
+            <span aria-hidden="true">▥</span> History</button
+          ><button class="nav-tab" data-tab="settings">
+            <span aria-hidden="true">⚙</span> Settings</button
+          ><span class="nav-note">ONE DAY AT A TIME.</span>
+        </nav>
+        <main id="main" tabindex="-1"></main>
+        <footer class="statusbar">
+          <span id="save-status">Saved on this device</span
+          ><span>BYTE v1.0 <span aria-hidden="true">▧</span></span>
+        </footer>
+      </div>
+      <p class="desktop-footer">
+        A small diary. A clearer picture.<span
+          >No accounts. No subscriptions. Just you.</span
+        >
+      </p>
+    </div>
+    <dialog id="dialog" aria-labelledby="dialog-title">
+      <div class="titlebar">
+        <span id="dialog-title"></span
+        ><button
+          class="close-window"
+          id="close-dialog"
+          aria-label="Close dialog"
+        >
+          ×
+        </button>
+      </div>
+      <div id="dialog-content"></div>
+    </dialog>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
