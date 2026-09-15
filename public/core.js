@@ -110,7 +110,11 @@ export function validateState(s) {
         !nutrients(f) ||
         !num(f.serving, 10000) ||
         f.serving <= 0 ||
-        !str(f.unit)
+        !str(f.unit) ||
+        (f.basis !== undefined && !["g", "ml"].includes(f.basis)) ||
+        (f.packageSize != null &&
+          (!num(f.packageSize, 10000) || f.packageSize <= 0)) ||
+        (f.barcode != null && !/^\d{8,14}$/.test(f.barcode))
       )
         throw Error("Invalid saved food in backup.");
     if (!p.days || typeof p.days !== "object" || Array.isArray(p.days))

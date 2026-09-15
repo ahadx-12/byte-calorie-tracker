@@ -1,6 +1,6 @@
 {
   "name": "byte-calorie-tracker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "A small, offline-first calorie diary with a classic desktop soul.",
   "type": "module",
@@ -16,6 +16,7 @@
     "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "1.58.2"
+    "@playwright/test": "1.58.2",
+    "@zxing/browser": "0.2.1"
   }
 }

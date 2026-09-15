@@ -1,4 +1,4 @@
-const CACHE = "byte-v1.0.0";
+const CACHE = "byte-v1.1.1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,9 @@ const ASSETS = [
   "./app.js",
   "./core.js",
   "./foods.js",
+  "./scanner.js",
+  "./scan-model.js",
+  "./vendor/zxing-browser.min.js",
   "./icon.svg",
   "./icon-192.png",
   "./icon-512.png",

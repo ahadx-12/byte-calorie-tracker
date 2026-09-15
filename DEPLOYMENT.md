@@ -13,6 +13,8 @@ Byte Milad is a static application. The AWS host only serves files; private diar
 
 No environment variables or API keys are required. If the console suggests SSR hosting or a backend environment, choose static hosting. Future pushes to the connected branch trigger deployment.
 
+The scanner decoder is committed in `public/vendor/`. Serve those files along with `scanner.js` and `scan-model.js`. The CSP in `customHttp.yml` permits connections to `https://world.openfoodfacts.org` and local blob images/video for photo and camera scanning. If you previously added custom headers in the AWS console, update them to match; an old `connect-src 'self'` policy will block lookups. Camera access needs HTTPS and the user's browser permission. In browsers that do not expose a camera, photo decoding and typed codes remain available.
+
 ## Option 2: Upload the deployment ZIP
 
 Use the supplied `byte-aws-deploy.zip`, or build a new one:
@@ -48,4 +50,4 @@ Changing the hosting address creates a different browser storage area. Export fr
 
 ## Cost
 
-The application uses no paid API, subscription, database, server instance or external runtime dependency. AWS hosting/build/transfer fees can apply under your account's pricing and free-tier eligibility. Select billing alerts appropriate to your account. No AWS resources have been created by these files.
+The application uses no paid API, subscription, database or server instance. The bundled scanner is open source, and Open Food Facts provides free product lookup. AWS hosting/build/transfer fees can apply under your account's pricing and free-tier eligibility. Select billing alerts appropriate to your account. No AWS resources have been created by these files.

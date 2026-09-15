@@ -1109,15 +1109,181 @@ dialog .titlebar {
   }
 }
 
-.mobile-log {
-  display: none;
+.logging-actions {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 14px;
+  max-width: 680px;
+  margin: 0 auto 28px;
+}
+.logging-actions button {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-size: 24px;
+  text-align: left;
+}
+.logging-actions small {
+  display: block;
+  font:
+    12px/1.6 Tahoma,
+    sans-serif;
+  opacity: 0.8;
+}
+.logging-actions .scan-action {
+  background: var(--blue);
+  color: #152e32;
+  border-color: #96bec4 #365c62 #365c62 #96bec4;
+  font-size: 21px;
+}
+.action-symbol {
+  font:
+    42px Georgia,
+    serif;
+}
+.barcode-symbol {
+  font: 38px monospace;
+}
+.scan-intro {
+  margin-bottom: 14px;
+  font-size: 15px;
+}
+.scan-camera {
+  position: relative;
+  aspect-ratio: 1.8;
+  background: var(--charcoal);
+  overflow: hidden;
+  border: 2px inset #999082;
+}
+.scan-camera video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scan-guide {
+  position: absolute;
+  inset: 20% 12%;
+  border: 2px solid var(--blue);
+  pointer-events: none;
+}
+.scan-camera-label {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  color: var(--paper);
+  font: 10px monospace;
+  letter-spacing: 1px;
+}
+.scan-status {
+  margin: 12px 0;
+  font-size: 14px;
+  min-height: 42px;
+  overflow-wrap: anywhere;
+}
+.scan-controls {
+  margin-top: 10px;
+}
+.barcode-form {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.barcode-form input {
+  width: 100%;
+}
+.barcode-form button {
+  width: 100%;
+}
+.scan-privacy {
+  margin-top: 12px;
+}
+.product-source {
+  font-size: 12px;
+  margin: 8px 0 14px;
+}
+.label-details {
+  margin: 10px 0 18px;
+  border: 1px solid var(--line);
+  padding: 12px;
+  background: var(--panel);
+}
+.label-details summary {
+  cursor: pointer;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: bold;
+}
+.label-details .help {
+  margin-bottom: 12px;
+}
+.fraction-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+}
+.fraction-buttons button {
+  font:
+    24px Georgia,
+    serif;
+}
+.fraction-buttons small {
+  font:
+    11px Tahoma,
+    sans-serif;
+  display: block;
+  margin-top: 5px;
+}
+.fraction-buttons [aria-pressed="true"] {
+  background: var(--blue);
+  border-color: var(--charcoal);
+  box-shadow: inset 1px 1px 1px #365c62;
+}
+.scan-submit {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 12px;
+}
+[hidden] {
+  display: none !important;
 }
 @media (max-width: 680px) {
-  .mobile-log {
-    display: block;
-    width: 100%;
-    margin: -4px 0 18px;
-    min-height: 48px;
+  .logging-actions {
+    gap: 9px;
+    margin-bottom: 22px;
+    grid-template-columns: 1.3fr 1fr;
+  }
+  .logging-actions button {
+    min-height: 82px;
+    gap: 8px;
+    font-size: 21px;
+    padding: 10px;
+  }
+  .logging-actions .scan-action {
+    font-size: 18px;
+  }
+  .logging-actions small {
+    font-size: 10px;
+  }
+  .action-symbol {
+    font-size: 28px;
+  }
+  .barcode-symbol {
+    font-size: 24px;
+  }
+  .brand {
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    gap: 8px;
+  }
+  .brand small {
+    letter-spacing: 0.5px;
+  }
+  .top-right select {
+    max-width: 106px;
   }
   .add-small {
     width: 44px;

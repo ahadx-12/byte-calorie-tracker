@@ -11,6 +11,8 @@ import {
   validateState,
 } from "./core.js";
 import { FOODS } from "./foods.js";
+import { mountScanner } from "./scanner.js";
+import { productPortion } from "./scan-model.js";
 const $ = (s) => document.querySelector(s);
 const esc = (s) =>
   String(s).replace(
@@ -78,14 +80,23 @@ function toast(message, undo) {
     undo ? 12000 : 5000,
   );
 }
+let modalCleanup;
+function cleanModal() {
+  modalCleanup?.();
+  modalCleanup = null;
+}
 function openModal(title, html) {
+  cleanModal();
   $("#dialog-title").textContent = title;
   $("#dialog-content").innerHTML = html;
   if (!$("#dialog").open) $("#dialog").showModal();
 }
 function closeModal() {
+  cleanModal();
   $("#dialog").close();
 }
+$("#dialog").addEventListener("close", cleanModal);
+$("#dialog").addEventListener("cancel", cleanModal);
 $("#close-dialog").onclick = closeModal;
 $("#dialog").addEventListener("click", (e) => {
   if (e.target === $("#dialog")) {
@@ -149,7 +160,8 @@ function todayView() {
     left = p.goals.calories - t.calories,
     water = day().water;
   return `
- <div class="page-heading"><div><div class="eyebrow">YOUR DAILY CHECK-IN</div><h1>${date === localDate() ? "Make today count." : new Date(date + "T12:00:00").toLocaleDateString(undefined, { month: "long", day: "numeric" })}</h1></div>${dateControls()}</div><button id="mobile-log" class="primary mobile-log">+ Log food</button>
+ <div class="page-heading"><div><div class="eyebrow">YOUR DAILY CHECK-IN</div><h1>${date === localDate() ? "Make today count." : new Date(date + "T12:00:00").toLocaleDateString(undefined, { month: "long", day: "numeric" })}</h1></div>${dateControls()}</div>
+ <div class="logging-actions" aria-label="Food logging"><button id="log-food" class="primary"><span class="action-symbol" aria-hidden="true">+</span><span>Log food<small>Search, save, or add a meal</small></span></button><button id="scan-food" class="scan-action"><span class="barcode-symbol" aria-hidden="true">▥</span><span>Scan food<small>Barcode or QR code</small></span></button></div>
  <div class="dashboard"><section><div class="summary"><div class="summary-top"><div class="calories"><div class="eyebrow">CALORIES SO FAR</div><div class="big-number">${fmt(t.calories)}<small>kcal</small></div><div class="summary-label">of your ${fmt(p.goals.calories)} kcal daily goal</div></div><div class="remaining"><strong>${fmt(Math.abs(left))}</strong><span>${left >= 0 ? "remaining" : "above goal"}</span></div></div><div class="meter" role="progressbar" aria-label="Daily calories" aria-valuenow="${Math.round(t.calories)}" aria-valuemin="0" aria-valuemax="${Math.max(p.goals.calories, Math.round(t.calories))}"><span style="width:${Math.min(100, (t.calories / p.goals.calories) * 100)}%;${left < 0 ? "background:var(--red)" : ""}"></span></div><div class="macro-row"><div><small>Protein</small><strong>${fmt(t.protein)}g</strong> <small>/ ${p.goals.protein}g goal</small></div><div><small>Carbs</small><strong>${fmt(t.carbs)}g</strong><small>logged today</small></div><div><small>Fat</small><strong>${fmt(t.fat)}g</strong><small>logged today</small></div></div></div>
  <div class="section-title"><h2>The food diary</h2><button id="copy-yesterday" class="text-button">Copy previous day</button></div>
  ${MEALS.map((meal, i) => {
@@ -186,7 +198,8 @@ function bindToday() {
       render();
     }
   };
-  $("#mobile-log").onclick = () => foodPicker();
+  $("#log-food").onclick = () => foodPicker();
+  $("#scan-food").onclick = openScan;
   $("#add-food").onclick = () => foodPicker();
   document
     .querySelectorAll("[data-add]")
@@ -303,6 +316,10 @@ function foodPicker(meal = "Snacks", mode = "search") {
   show();
 }
 function portionForm(food) {
+  if (food.basis) {
+    scannedPortionForm(food);
+    return;
+  }
   const custom = !food.id.startsWith("base-");
   openModal(
     food.name,
@@ -347,6 +364,176 @@ function portionForm(food) {
     });
     closeModal();
     changed(`${food.name} added`);
+  };
+}
+function openScan() {
+  modalMeal = "Snacks";
+  openModal("Scan food", "");
+  modalCleanup = mountScanner($("#dialog-content"), {
+    onProduct: scannedPortionForm,
+    onManual: () =>
+      scannedPortionForm({ name: "", basis: "g", source: "manual" }),
+    findSaved: (code) =>
+      profile().foods.find((f) => f.barcode === code && f.basis),
+  });
+}
+function scannedPortionForm(product) {
+  const sourced = product.source === "openfoodfacts";
+  const fixed = (v) => (v === null || v === undefined ? "" : v);
+  openModal(
+    "Your portion",
+    `<button id="back-scan" class="text-button">‹ Back to scanner</button>
+    ${sourced ? `<p class="product-source">Product data: <a href="https://world.openfoodfacts.org/product/${esc(product.barcode)}" target="_blank" rel="noopener noreferrer">Open Food Facts ↗</a> · <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer">ODbL</a></p>` : '<p class="help">Use the nutrition label on your package. You can enter values per 100 g or per serving.</p>'}
+    <form id="scanned-portion-form"><label class="field">Product name<input name="name" value="${esc(product.name)}" maxlength="100" required placeholder="e.g. Greek yogurt"></label>
+    ${product.brand ? `<p class="help">${esc(product.brand)}</p>` : ""}
+    ${mealSelect()}
+    <details class="label-details" ${product.calories == null ? "open" : ""}><summary>Check or edit nutrition label</summary>
+      <p class="help">Confirm these values against your package. Missing calories must be entered; unknown macros count as zero.</p>
+      <div class="form-grid"><label class="field">Label values per<input name="labelAmount" type="number" min="0.01" max="10000" step="any" value="100" inputmode="decimal" required></label><label class="field">Label unit<select name="basis" aria-label="Label unit"><option value="g" ${product.basis !== "ml" ? "selected" : ""}>grams (g)</option><option value="ml" ${product.basis === "ml" ? "selected" : ""}>millilitres (ml)</option></select></label>
+      <label class="field">Label calories (kcal)<input name="calories" type="number" min="0" max="100000" step="any" value="${fixed(product.calories)}" inputmode="decimal" required></label>
+      ${["protein", "carbs", "fat"].map((k) => `<label class="field">Label ${k} (g)<input name="${k}" type="number" min="0" max="100000" step="any" value="${fixed(product[k])}" inputmode="decimal" placeholder="Unknown"></label>`).join("")}</div>
+    </details>
+    <div class="form-grid"><label class="field">Full package size<input name="packageSize" type="number" min="0.01" max="10000" step="any" value="${fixed(product.packageSize)}" inputmode="decimal" placeholder="e.g. 400"></label><label class="field">How much did you have?<select name="mode" aria-label="Portion method"><option value="amount">Weight / volume</option><option value="percent">Fraction of package</option></select></label></div>
+    <p id="package-unit-note" class="help"></p>
+    <div class="fraction-buttons" aria-label="Package fractions">${[
+      [25, "¼"],
+      [50, "½"],
+      [75, "¾"],
+      [100, "All"],
+    ]
+      .map(
+        ([n, label]) =>
+          `<button type="button" data-fraction="${n}" aria-label="${n}% of package" aria-pressed="false">${label}<small>${n === 100 ? "whole pack" : n + "%"}</small></button>`,
+      )
+      .join("")}</div>
+    <label class="field" id="amount-field"><span id="amount-label">Amount eaten (${product.basis || "g"})</span><input name="eatenAmount" aria-label="Amount eaten" type="number" min="0.01" max="10000" step="any" value="${product.labelServing || 100}" inputmode="decimal"></label>
+    <label class="field" id="percent-field" hidden>Percent of the whole package<input name="percent" aria-label="Percent of package" type="number" min="0.01" max="100" step="any" value="25" inputmode="decimal"></label>
+    <div id="scan-portion-preview" class="portion-preview" aria-live="polite"></div>
+    <p class="help">Package fractions are estimates. Use the printed net weight or volume; for a multipack, enter the total you mean by “whole package”.</p>
+    <label class="check"><input name="remember" type="checkbox" checked>Save this product for next time</label>
+    <p id="portion-error" class="error" role="alert" hidden></p>
+    <button type="submit" class="primary scan-submit">Add to diary</button></form>`,
+  );
+  $("#back-scan").onclick = openScan;
+  const f = $("#scanned-portion-form");
+  const read = () => ({
+    labelAmount: Number(f.elements.labelAmount.value),
+    calories:
+      f.elements.calories.value === ""
+        ? NaN
+        : Number(f.elements.calories.value),
+    ...Object.fromEntries(
+      ["protein", "carbs", "fat"].map((k) => [k, Number(f.elements[k].value)]),
+    ),
+    mode: f.elements.mode.value,
+    amount: Number(
+      f.elements.mode.value === "percent"
+        ? f.elements.percent.value
+        : f.elements.eatenAmount.value,
+    ),
+    packageSize: Number(f.elements.packageSize.value),
+  });
+  const update = () => {
+    const fraction = f.elements.mode.value === "percent",
+      unit = f.elements.basis.value;
+    $("#amount-field").hidden = fraction;
+    $("#percent-field").hidden = !fraction;
+    f.elements.eatenAmount.required = !fraction;
+    f.elements.percent.required = fraction;
+    f.elements.packageSize.required = fraction;
+    f.elements.eatenAmount.disabled = fraction;
+    f.elements.percent.disabled = !fraction;
+    $("#amount-label").textContent = `Amount eaten (${unit})`;
+    $("#package-unit-note").textContent =
+      `Package size and portion use ${unit === "g" ? "grams" : "millilitres"}. Check the label’s unit; grams and millilitres are not interchangeable.`;
+    document.querySelectorAll("[data-fraction]").forEach((b) => {
+      const selected =
+        fraction &&
+        Number(b.dataset.fraction) === Number(f.elements.percent.value);
+      b.setAttribute("aria-pressed", String(selected));
+    });
+    try {
+      const t = productPortion(read());
+      $("#scan-portion-preview").innerHTML =
+        `<div><strong>${fmt(t.calories)}</strong> kcal<small class="help" style="display:block">${Math.round(t.eaten * 100) / 100} ${unit}${fraction ? ` · ${f.elements.percent.value}% of package` : ""}</small></div><span>P ${fmt(t.protein)}g<br>C ${fmt(t.carbs)}g · F ${fmt(t.fat)}g</span>`;
+    } catch (error) {
+      $("#scan-portion-preview").textContent = error.message;
+    }
+  };
+  f.oninput = update;
+  f.onchange = update;
+  document.querySelectorAll("[data-fraction]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        f.elements.mode.value = "percent";
+        f.elements.percent.value = b.dataset.fraction;
+        update();
+      }),
+  );
+  f.addEventListener(
+    "invalid",
+    () => {
+      f.querySelector("details").open = true;
+    },
+    true,
+  );
+  update();
+  f.onsubmit = (e) => {
+    e.preventDefault();
+    try {
+      const input = read(),
+        result = productPortion(input),
+        name = f.elements.name.value.trim(),
+        basis = f.elements.basis.value;
+      if (!name) throw Error("Enter a product name.");
+      const { eaten, ...nutrients } = result;
+      const per100 = Object.fromEntries(
+        ["calories", "protein", "carbs", "fat"].map((k) => [
+          k,
+          Math.round((input[k] / input.labelAmount) * 10000) / 100,
+        ]),
+      );
+      if (Object.values(per100).some((v) => v > 100000))
+        throw Error("Check the nutrition label values and serving size.");
+      profile().entries.push({
+        id: uid(),
+        date,
+        name,
+        meal: f.elements.meal.value,
+        amount: `${Math.round(eaten * 100) / 100} ${basis}${input.mode === "percent" ? ` · ${input.amount}% of ${input.packageSize} ${basis} package` : ""}`,
+        estimated: input.mode === "percent",
+        source: product.source,
+        ...nutrients,
+      });
+      if (f.elements.remember.checked) {
+        const saved = {
+          id: product.id || uid(),
+          name,
+          basis,
+          serving: 100,
+          unit: `100 ${basis}`,
+          packageSize: input.packageSize || null,
+          barcode: product.barcode || null,
+          source: product.source,
+          estimated: false,
+          ...per100,
+        };
+        const previous = profile().foods.findIndex(
+          (item) =>
+            item.id === saved.id ||
+            (saved.barcode && item.barcode === saved.barcode),
+        );
+        if (previous >= 0) {
+          saved.id = profile().foods[previous].id;
+          profile().foods[previous] = saved;
+        } else profile().foods.push(saved);
+      }
+      closeModal();
+      changed(`${name} added`);
+    } catch (error) {
+      $("#portion-error").hidden = false;
+      $("#portion-error").textContent = error.message;
+    }
   };
 }
 function quickForm(entry) {
@@ -484,7 +671,7 @@ function bindHistory() {
 }
 function settingsView() {
   const p = profile();
-  return `<div class="page-heading"><div><div class="eyebrow">MAKE IT YOURS</div><h1>Your diary, your way.</h1></div></div><div class="settings-grid"><div><section class="panel"><h2>Daily goals</h2><p>Choose targets that work for you. These are tracking preferences, not personalized recommendations.</p><form id="goals-form"><label class="field">Daily calories (kcal)<input name="calories" type="number" min="1" max="10000" step="1" value="${p.goals.calories}" required></label><div class="form-grid"><label class="field">Protein (g)<input name="protein" type="number" min="0" max="1000" step="1" value="${p.goals.protein}" required></label><label class="field">Water (ml)<input name="water" type="number" min="0" max="10000" step="1" value="${p.goals.water}" required></label></div><button class="primary">Save goals</button></form></section><section class="panel"><h2>Profiles</h2><p>Up to five diaries on this device. Each has its own food logs and goals.</p><form id="rename-form"><label class="field">Current profile name<input name="name" maxlength="40" value="${esc(p.name)}" required></label><button>Rename profile</button></form><div class="button-row"><button id="new-profile" ${state.profiles.length >= 5 ? "disabled" : ""}>+ New profile</button></div></section></div><div><section class="panel"><h2>Keep a copy</h2><p>Your diary lives in this browser. Export a backup before clearing browser data, changing devices, or moving to a different website address.</p><div class="button-row"><button id="export" class="primary">Export backup</button><button id="import">Restore backup</button></div><input id="import-file" class="sr-only" type="file" accept=".json,application/json"><p class="help" style="margin-top:14px">Includes all profiles, goals, saved foods and history. Restore replaces this device’s diary.</p>${corrupt ? '<button id="export-raw">Export unreadable stored data</button>' : ""}<div class="install-tip"><h3>Keep Byte Milad on your iPhone</h3><p>In Safari, tap Share → Add to Home Screen. Open it once online; it will then work offline. Export a backup from this browser before switching to the Home Screen app.</p></div></section><section class="panel"><h2>Your food shelf</h2><p>${FOODS.length} built-in foods · ${p.foods.length} saved meals</p>${p.foods.length ? p.foods.map((f) => `<div class="entry"><div class="entry-info"><div class="entry-name">${esc(f.name)}</div><div class="entry-detail">${fmt(f.calories)} kcal / ${esc(f.unit)}</div></div><button class="text-button" data-remove-food="${esc(f.id)}" aria-label="Remove saved food ${esc(f.name)}">Remove</button></div>`).join("") : '<p class="help">Use “Save this meal for next time” in Quick entry.</p>'}</section><section class="panel"><h2>Small by design.</h2><p>No account, ads, trackers, paid APIs, or cloud storage. Nothing you log is sent to a server. Profiles are convenient separation, not password protection.</p><p class="help">Built-in foods use rounded generic estimates. Use your package label for branded foods, weigh portions when practical, and log oils and sauces separately. Saved meals use one reusable portion; they do not have a known gram weight.</p><a href="https://fdc.nal.usda.gov/" target="_blank" rel="noopener noreferrer" class="help">Look up more detailed nutrition at USDA FoodData Central ↗</a></section></div></div>`;
+  return `<div class="page-heading"><div><div class="eyebrow">MAKE IT YOURS</div><h1>Your diary, your way.</h1></div></div><div class="settings-grid"><div><section class="panel"><h2>Daily goals</h2><p>Choose targets that work for you. These are tracking preferences, not personalized recommendations.</p><form id="goals-form"><label class="field">Daily calories (kcal)<input name="calories" type="number" min="1" max="10000" step="1" value="${p.goals.calories}" required></label><div class="form-grid"><label class="field">Protein (g)<input name="protein" type="number" min="0" max="1000" step="1" value="${p.goals.protein}" required></label><label class="field">Water (ml)<input name="water" type="number" min="0" max="10000" step="1" value="${p.goals.water}" required></label></div><button class="primary">Save goals</button></form></section><section class="panel"><h2>Profiles</h2><p>Up to five diaries on this device. Each has its own food logs and goals.</p><form id="rename-form"><label class="field">Current profile name<input name="name" maxlength="40" value="${esc(p.name)}" required></label><button>Rename profile</button></form><div class="button-row"><button id="new-profile" ${state.profiles.length >= 5 ? "disabled" : ""}>+ New profile</button></div></section></div><div><section class="panel"><h2>Keep a copy</h2><p>Your diary lives in this browser. Export a backup before clearing browser data, changing devices, or moving to a different website address.</p><div class="button-row"><button id="export" class="primary">Export backup</button><button id="import">Restore backup</button></div><input id="import-file" class="sr-only" type="file" accept=".json,application/json"><p class="help" style="margin-top:14px">Includes all profiles, goals, saved foods and history. Restore replaces this device’s diary.</p>${corrupt ? '<button id="export-raw">Export unreadable stored data</button>' : ""}<div class="install-tip"><h3>Keep Byte Milad on your iPhone</h3><p>In Safari, tap Share → Add to Home Screen. Open it once online; it will then work offline. Export a backup from this browser before switching to the Home Screen app.</p></div></section><section class="panel"><h2>Your food shelf</h2><p>${FOODS.length} built-in foods · ${p.foods.length} saved meals</p>${p.foods.length ? p.foods.map((f) => `<div class="entry"><div class="entry-info"><div class="entry-name">${esc(f.name)}</div><div class="entry-detail">${fmt(f.calories)} kcal / ${esc(f.unit)}</div></div><button class="text-button" data-remove-food="${esc(f.id)}" aria-label="Remove saved food ${esc(f.name)}">Remove</button></div>`).join("") : '<p class="help">Use “Save this meal for next time” in Quick entry.</p>'}</section><section class="panel"><h2>Small by design.</h2><p>No account, ads, trackers, paid APIs, or cloud storage. Your diary stays on this device. Product lookup sends the barcode to Open Food Facts; camera frames and photos stay here. Profiles are convenient separation, not password protection.</p><p class="help">Built-in foods use rounded generic estimates. Use your package label for branded foods, weigh portions when practical, and log oils and sauces separately. Quick-entry saved meals use reusable portions. Scanned products use label weights or volumes.</p><a href="https://fdc.nal.usda.gov/" target="_blank" rel="noopener noreferrer" class="help">Look up more detailed nutrition at USDA FoodData Central ↗</a></section></div></div>`;
 }
 function download(content, name) {
   const url = URL.createObjectURL(

@@ -2,7 +2,7 @@
 
 A small, private calorie diary with an early-2000s desktop feel. Built for one person, with up to five independent local profiles.
 
-**No accounts. No analytics. No paid APIs. No runtime dependencies. MIT licensed.**
+**No accounts. No analytics. No paid APIs. MIT licensed.**
 
 ![Byte Milad desktop diary](docs/desktop.png)
 
@@ -12,6 +12,8 @@ A small, private calorie diary with an early-2000s desktop feel. Built for one p
 
 - Breakfast, lunch, dinner and snack logs, on today or a past date.
 - Search 40 common foods; scale calories and macros by grams or household portions.
+- Scan EAN/UPC barcodes and product QR codes with the camera, decode a photo locally, or type a barcode.
+- Look up packaged foods in Open Food Facts, review/edit nutrition, and log grams, millilitres, or ¼ / ½ / ¾ / all of a package.
 - Quick entry using package-label totals or your own estimate.
 - Save a whole meal as a reusable portion and star favorite foods.
 - Edit entries, delete with undo, and copy the previous day's meals with confirmation and undo.
@@ -48,6 +50,8 @@ AWS hosting is separate from the open-source app. Your AWS account's hosting/bui
 
 Data stays in this browser's `localStorage`, under `byte-diary-v1`. The host serves public application files; the app never uploads diary data. Hosting providers may still keep ordinary access logs.
 
+Product lookup sends a barcode and an app identifier to Open Food Facts, which also receives normal connection metadata such as the IP address. Camera frames and selected photos are decoded on the device and are never uploaded. No account or API key is required. Saved products work offline; new product lookups need internet. Ordinary website QR codes and photos of a meal without a barcode cannot supply nutrition data.
+
 **There is no automatic cross-device sync.** Different browsers, devices, domains and browser/Home Screen contexts may have separate storage. Use Settings → Export backup / Restore backup to move data. Export regularly: clearing site data, private browsing, browser storage eviction or losing a device can remove the diary. The backup contains personal information; keep it somewhere appropriate.
 
 Profiles are local organization, not security boundaries. Anyone using the same browser can select any profile. Multiple people on different devices have their own independent diaries. Simultaneous edits in multiple tabs can overwrite one another; use one editing tab at a time.
@@ -61,6 +65,10 @@ The built-in shelf contains **rounded generic estimates**, not verified branded 
 For built-in foods, nutrient totals equal the amount in grams multiplied by the per-100-g value, divided by 100. Calculation retains two decimals; the diary rounds display values. All “calories” are kilocalories (kcal). The supplied calorie value is authoritative; the app does not recompute calories from rounded macros.
 
 For custom saved meals, values represent a whole reusable serving. Internally `serving: 100` is a scaling convention, **not a measured 100 g weight**. The interface only offers serving multiples for these meals. Unknown macros can remain zero and are then omitted from macro totals, not inferred.
+
+Scanned or manually entered package labels are saved separately with an explicit `basis` of `g` or `ml`. Values entered per serving are normalized to 100 units. A quarter of a 400 g package is 100 g; with 250 kcal per 100 g, this logs 250 kcal. Package size is required for fractions. Weight and volume are never converted using an assumed density. Check that the printed net quantity and unit match your package, especially for multipacks. Fractions are marked as estimates.
+
+The scanner uses the Open Food Facts v3.6 API and its `nutrition.aggregated_set` as-sold values, with legacy `nutriments` parsing for compatibility. Prepared-only or missing calories are not guessed; the label editor opens for manual entry. Ingredient-based nutrient estimates are ignored. Unknown macros remain blank in the editor and count as zero when logged. Barcode text and supported GTIN URLs are parsed locally; QR links are never opened automatically. Lookups are throttled and saved products are reused without a network request.
 
 An entry distinguishes an estimate from custom/label values. The initial goals (2,200 kcal, 120 g protein and 2,000 ml water) are editable placeholders, not recommendations or a calculated diet plan. Goals are not used to prescribe weight loss. History averages include only dates with food records; incomplete logged days still count. Weight history shows the latest actual check-in; there is no prediction.
 
@@ -89,6 +97,9 @@ GitHub Actions repeats verification on push and pull request. On Linux, install 
 - `public/app.js` — interface, logging flows and persistence.
 - `public/core.js` — data model, validation, date and nutrient calculations.
 - `public/foods.js` — the offline food shelf.
+- `public/scanner.js` — camera/photo decoding, product lookup and camera cleanup.
+- `public/scan-model.js` — GTIN validation, nutrition parsing and package portion math.
+- `public/vendor/` — pinned open-source ZXing decoder and third-party licenses.
 - `public/sw.js` — versioned offline asset cache.
 - `scripts/` — dependency-free local server and static build.
 - `tests/` — unit and browser coverage.
@@ -98,3 +109,7 @@ When releasing changes, change the cache version in `public/sw.js`. The new serv
 ## License
 
 [MIT](LICENSE). System fonts are requested from the device and are not distributed. No remote fonts or image services are used. Playwright is Apache-2.0 licensed and is used only for development.
+
+The scanner bundles [@zxing/browser](https://github.com/zxing-js/browser) 0.2.1 (MIT), @zxing/library (Apache-2.0), and @zxing/text-encoding (Apache-2.0). License texts are in `public/vendor/`. To regenerate the committed vendor files, run `npm ci` then `node scripts/vendor-scanner.mjs`. Deployment does not fetch code from a CDN.
+
+[Open Food Facts](https://world.openfoodfacts.org/) data is licensed under [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) and its individual contents under [DbCL](https://opendatacommons.org/licenses/dbcl/1-0/); these data licenses are separate from the app's MIT license. Attribution is shown with each looked-up product. Database coverage and accuracy vary by product. See the [API documentation](https://openfoodfacts.github.io/openfoodfacts-server/api/) for usage requirements and the optional API usage contact form.
